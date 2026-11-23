@@ -57,13 +57,16 @@ SAMPLE = [
 
 # ---------------- ฟังก์ชัน AI ----------------
 @st.cache_resource
+def make_client(key):
+    return genai.Client(api_key=key)
+
+
 def get_client():
-    key = None
     try:
         key = st.secrets["GEMINI_API_KEY"]
     except Exception:
         key = os.environ.get("GEMINI_API_KEY")
-    return genai.Client(api_key=key) if key else None
+    return make_client(key) if key else None
 
 
 def ask(contents, tries=3):
