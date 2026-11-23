@@ -298,7 +298,7 @@ if "df" in st.session_state:
     st.subheader("4) คำแนะนำการออมจาก AI")
     if st.button("ขอคำแนะนำ", disabled=spent.empty):
         over = {c: float(spent.get(c, 0)) - b for c, b in budgets.items() if b > 0 and float(spent.get(c, 0)) > b}
-                prompt = (
+        prompt = (
             f"รายรับรวม {income:,.0f} บาท รายจ่ายรวม {spent.sum():,.0f} บาท คงเหลือ {income - spent.sum():,.0f} บาท\n"
             f"รายจ่ายแยกหมวด: {spent.round(0).to_dict()}\n"
             f"หมวดที่เกินงบ (เกินกี่บาท): {over or 'ไม่มี'}\n"
