@@ -315,10 +315,3 @@ if "df" in st.session_state:
 
     st.download_button("ดาวน์โหลดผลเป็น CSV", edited.to_csv(index=False, encoding="utf-8-sig"),
                        file_name="budget_result.csv", mime="text/csv")
-
-st.divider()
-st.subheader("แบบประเมินการใช้งาน")
-if FEEDBACK_URL:
-    st.link_button("ตอบแบบประเมิน (1 นาที)", FEEDBACK_URL)
-else:
-    st.caption("(ผู้พัฒนา: ใส่ลิงก์ Google Form ที่ตัวแปร FEEDBACK_URL ในไฟล์ app.py)")
