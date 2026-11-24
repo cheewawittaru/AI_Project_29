@@ -185,7 +185,7 @@ html, body, .stApp, .stMarkdown, button, input, textarea, label, p {
   font-family: 'Noto Sans Thai', 'Segoe UI', sans-serif;
 }
 .stApp { background: #F4F7FB; }
-.block-container { padding-top: 1.4rem; max-width: 1100px; }
+.block-container { padding-top: 3.6rem; max-width: 1100px; }
 .hero { background: linear-gradient(135deg, #0B2545 0%, #134074 60%, #0F766E 100%);
         color: #fff; border-radius: 18px; padding: 26px 30px; margin-bottom: 14px; }
 .hero-title { font-size: 2rem; font-weight: 700; letter-spacing: .2px; line-height: 1.3; }
