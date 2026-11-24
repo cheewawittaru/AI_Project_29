@@ -173,15 +173,85 @@ def set_data(df, seconds=None):
     st.session_state.pop("editor", None)
 
 
+
+
+# ---------------- หน้าตา (ธีมการเงิน) ----------------
+import altair as alt
+
+CSS = """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap');
+html, body, .stApp, .stMarkdown, button, input, textarea, label, p {
+  font-family: 'Noto Sans Thai', 'Segoe UI', sans-serif;
+}
+.stApp { background: #F4F7FB; }
+.block-container { padding-top: 1.4rem; max-width: 1100px; }
+.hero { background: linear-gradient(135deg, #0B2545 0%, #134074 60%, #0F766E 100%);
+        color: #fff; border-radius: 18px; padding: 26px 30px; margin-bottom: 14px; }
+.hero-title { font-size: 2rem; font-weight: 700; letter-spacing: .2px; line-height: 1.3; }
+.hero-sub { opacity: .88; margin-top: 4px; font-size: 1rem; }
+.privacy { background: #EAF4F3; border-left: 4px solid #0F766E; color: #0B3B38;
+           padding: 10px 14px; border-radius: 8px; font-size: .9rem; margin-bottom: 14px; }
+.kpi { background: #fff; border-radius: 14px; padding: 16px 18px;
+       box-shadow: 0 1px 4px rgba(11,37,69,.10); border-left: 5px solid #94A3B8; }
+.kpi .lbl { color: #64748B; font-size: .85rem; }
+.kpi .val { font-size: 1.65rem; font-weight: 700; color: #0B2545; }
+.kpi.in { border-left-color: #16A34A; } .kpi.out { border-left-color: #DC2626; }
+.kpi.bal { border-left-color: #2563EB; }
+.bud { background: #fff; border-radius: 12px; padding: 12px 16px; margin-bottom: 10px;
+       box-shadow: 0 1px 4px rgba(11,37,69,.08); }
+.bud .row { display: flex; justify-content: space-between; font-size: .92rem;
+            color: #0B2545; margin-bottom: 6px; }
+.bud .track { background: #E5EAF1; border-radius: 999px; height: 10px; overflow: hidden; }
+.bud .fill { height: 10px; border-radius: 999px; }
+.bud .over { color: #B91C1C; font-size: .85rem; margin-top: 6px; font-weight: 600; }
+h2, h3, h4 { color: #0B2545 !important; }
+.foot { color: #64748B; font-size: .8rem; text-align: center; margin-top: 28px; }
+</style>
+"""
+
+
+def kpi(label, value, kind):
+    return (f'<div class="kpi {kind}"><div class="lbl">{label}</div>'
+            f'<div class="val">{value:,.0f} บาท</div></div>')
+
+
+def budget_bar(cat, spent_amt, budget):
+    pct = spent_amt / budget
+    color = "#16A34A" if pct < 0.8 else ("#F59E0B" if pct <= 1 else "#DC2626")
+    width = min(pct, 1) * 100
+    over = f'<div class="over">เกินงบ {spent_amt - budget:,.0f} บาท</div>' if spent_amt > budget else ""
+    return (f'<div class="bud"><div class="row"><span>{cat}</span>'
+            f'<span>{spent_amt:,.0f} / {budget:,.0f} บาท ({pct:.0%})</span></div>'
+            f'<div class="track"><div class="fill" style="width:{width:.0f}%;background:{color}"></div></div>'
+            f'{over}</div>')
+
+
+def spend_chart(series):
+    d = series.reset_index()
+    d.columns = ["หมวด", "บาท"]
+    chart = (alt.Chart(d).mark_bar(color="#0F766E", cornerRadiusEnd=4)
+             .encode(x=alt.X("บาท:Q", title=None),
+                     y=alt.Y("หมวด:N", sort="-x", title=None),
+                     tooltip=["หมวด", "บาท"])
+             .properties(height=max(120, 36 * len(d))))
+    st.altair_chart(chart, use_container_width=True)
+
+
 # ---------------- หน้าเว็บ ----------------
-st.title("💰 AI Budget Advisor")
-st.caption("อัปโหลดสลิปหรือรายการเดินบัญชี ให้ AI จัดหมวดหมู่ สรุปรายเดือน และเตือนเมื่อใช้เกินงบ")
-st.info("🔒 กรุณาอย่าอัปโหลดข้อมูลบัญชีจริง ใช้ข้อมูลตัวอย่างหรือข้อมูลที่ปิดชื่อ/เลขบัญชีแล้ว "
-        "ระบบไม่บันทึกข้อมูลของคุณลงฐานข้อมูล (เก็บเฉพาะระหว่างใช้งาน)")
+st.markdown(CSS, unsafe_allow_html=True)
+st.markdown("""
+<div class="hero">
+  <div class="hero-title">AI Budget Advisor</div>
+  <div class="hero-sub">อัปโหลดสลิปหรือรายการเดินบัญชี ให้ AI จัดหมวดหมู่ สรุปรายเดือน และเตือนเมื่อใช้เกินงบ</div>
+</div>
+<div class="privacy"><b>ข้อควรทราบ:</b> กรุณาอย่าอัปโหลดข้อมูลบัญชีจริง ใช้ข้อมูลตัวอย่างหรือข้อมูลที่ปิดชื่อ/เลขบัญชีแล้ว
+ระบบไม่บันทึกข้อมูลของคุณลงฐานข้อมูล (เก็บเฉพาะระหว่างใช้งาน)</div>
+""", unsafe_allow_html=True)
 
 with st.sidebar:
-    st.header("ตั้งงบรายหมวด (บาท/เดือน)")
-    st.caption("เว้นเป็น 0 = ไม่ตั้งงบ")
+    st.markdown("### ตั้งงบรายหมวด")
+    st.caption("บาทต่อเดือน (0 = ไม่ตั้งงบ)")
     budgets = {c: st.number_input(c, min_value=0, value=0, step=500) for c in EXPENSE_CATS}
 
 tab1, tab2, tab3 = st.tabs(["📷 สลิป", "📄 รายการเดินบัญชี (CSV)", "🧪 ข้อมูลตัวอย่าง"])
@@ -252,12 +322,14 @@ with tab3:
                 for m, a, mm, c in SAMPLE]
         set_data(normalize(rows))
 
+
+
 # ---------------- ผลลัพธ์ ----------------
 if "df" in st.session_state:
     st.divider()
-    st.subheader("1) ตรวจและแก้ไขหมวดหมู่")
+    st.markdown("### 1) ตรวจและแก้ไขหมวดหมู่")
     if st.session_state.get("seconds"):
-        st.caption(f"⏱️ ประมวลผล {len(st.session_state['df'])} รายการ ใน {st.session_state['seconds']:.1f} วินาที")
+        st.caption(f"ประมวลผล {len(st.session_state['df'])} รายการ ใน {st.session_state['seconds']:.1f} วินาที")
     st.caption("รายการที่มี ⚠️ คือ AI ไม่มั่นใจ ควรตรวจก่อน แก้หมวดในตารางได้โดยตรง")
     edited = st.data_editor(
         st.session_state["df"], key="editor", use_container_width=True, hide_index=True,
@@ -275,43 +347,49 @@ if "df" in st.session_state:
     exp = view[view["category"] != INCOME]
     spent = exp.groupby("category")["amount"].sum().sort_values(ascending=False)
 
-    st.subheader("2) สรุป")
+    st.markdown("### 2) สรุปรายรับ-รายจ่าย")
     k1, k2, k3 = st.columns(3)
-    k1.metric("รายรับ", f"{income:,.0f} บาท")
-    k2.metric("รายจ่าย", f"{spent.sum():,.0f} บาท")
-    k3.metric("คงเหลือ", f"{income - spent.sum():,.0f} บาท")
+    k1.markdown(kpi("รายรับ", income, "in"), unsafe_allow_html=True)
+    k2.markdown(kpi("รายจ่าย", spent.sum(), "out"), unsafe_allow_html=True)
+    k3.markdown(kpi("คงเหลือ", income - spent.sum(), "bal"), unsafe_allow_html=True)
+    st.write("")
     if not spent.empty:
-        st.bar_chart(spent)
+        try:
+            spend_chart(spent)
+        except Exception:
+            st.bar_chart(spent)
 
-    st.subheader("3) งบและการแจ้งเตือน")
+    st.markdown("### 3) งบและการแจ้งเตือน")
     any_budget = False
     for cat in EXPENSE_CATS:
         b, s = budgets[cat], float(spent.get(cat, 0))
         if b > 0:
             any_budget = True
-            st.progress(min(s / b, 1.0), text=f"{cat}: {s:,.0f} / {b:,.0f} บาท")
-            if s > b:
-                st.error(f"⚠️ {cat} เกินงบ {s - b:,.0f} บาท")
+            st.markdown(budget_bar(cat, s, b), unsafe_allow_html=True)
     if not any_budget:
         st.info("ตั้งงบรายหมวดที่แถบด้านซ้าย เพื่อให้ระบบเตือนเมื่อใช้เกินงบ")
 
-    st.subheader("4) คำแนะนำการออมจาก AI")
-    if st.button("ขอคำแนะนำ", disabled=spent.empty):
-        over = {c: float(spent.get(c, 0)) - b for c, b in budgets.items() if b > 0 and float(spent.get(c, 0)) > b}
-        prompt = (
-            f"รายรับรวม {income:,.0f} บาท รายจ่ายรวม {spent.sum():,.0f} บาท คงเหลือ {income - spent.sum():,.0f} บาท\n"
-            f"รายจ่ายแยกหมวด: {spent.round(0).to_dict()}\n"
-            f"หมวดที่เกินงบ (เกินกี่บาท): {over or 'ไม่มี'}\n"
-            "ให้คำแนะนำการออม 3-4 ข้อ สั้น กระชับ ทำได้จริงสำหรับนักศึกษา/คนทำงานรุ่นใหม่ "
-            "ใช้ภาษาสุภาพเป็นกลาง ไม่ต้องลงท้ายด้วยค่ะหรือครับ "
-            "ใช้เฉพาะตัวเลขที่ให้มา ห้ามคำนวณหรือแต่งตัวเลขเพิ่มเอง"
-        )
-        try:
-            with st.spinner("AI กำลังวิเคราะห์..."):
-                st.write(ask(prompt).text)
-            st.caption("เป็นคำแนะนำทั่วไป ไม่ใช่คำปรึกษาทางการเงินเชิงวิชาชีพ")
-        except Exception as e:
-            st.error(f"ขอคำแนะนำไม่สำเร็จ: {e}")
+    st.markdown("### 4) คำแนะนำการออมจาก AI")
+    with st.container(border=True):
+        if st.button("ขอคำแนะนำ", type="primary", disabled=spent.empty):
+            over = {c: float(spent.get(c, 0)) - b for c, b in budgets.items() if b > 0 and float(spent.get(c, 0)) > b}
+            prompt = (
+                f"รายรับรวม {income:,.0f} บาท รายจ่ายรวม {spent.sum():,.0f} บาท คงเหลือ {income - spent.sum():,.0f} บาท\n"
+                f"รายจ่ายแยกหมวด: {spent.round(0).to_dict()}\n"
+                f"หมวดที่เกินงบ (เกินกี่บาท): {over or 'ไม่มี'}\n"
+                "ให้คำแนะนำการออม 3-4 ข้อ สั้น กระชับ ทำได้จริงสำหรับนักศึกษา/คนทำงานรุ่นใหม่ "
+                "ใช้ภาษาสุภาพเป็นกลาง ไม่ต้องลงท้ายด้วยค่ะหรือครับ "
+                "ใช้เฉพาะตัวเลขที่ให้มา ห้ามคำนวณหรือแต่งตัวเลขเพิ่มเอง"
+            )
+            try:
+                with st.spinner("AI กำลังวิเคราะห์..."):
+                    st.write(ask(prompt).text)
+                st.caption("เป็นคำแนะนำทั่วไป ไม่ใช่คำปรึกษาทางการเงินเชิงวิชาชีพ")
+            except Exception as e:
+                st.error(f"ขอคำแนะนำไม่สำเร็จ: {e}")
 
     st.download_button("ดาวน์โหลดผลเป็น CSV", edited.to_csv(index=False, encoding="utf-8-sig"),
                        file_name="budget_result.csv", mime="text/csv")
+
+st.markdown('<div class="foot">AI Budget Advisor | IT232 | Streamlit + Gemini API | ข้อมูลไม่ถูกบันทึก</div>',
+            unsafe_allow_html=True)
